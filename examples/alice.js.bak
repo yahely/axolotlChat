@@ -1,0 +1,67 @@
+
+var axolotl = require("../lib/axolotl/proto.js").proto
+var bn = require("bn.js");
+var ecc   = require("elliptic")
+var djb = new ecc.ec("curve25519");
+
+var alice = new axolotl("alice")
+var bob   = new axolotl("bob")
+
+var bobIntroduce = bob.introduce();
+bob.storePointAsJson("bob", "DHI",  bobIntroduce.identity);
+bob.storePointAsJson("bob", "DHHS", bobIntroduce.handshake);
+bob.storePointAsJson("bob", "DHR",  bobIntroduce.ratchet);
+
+var aliceIntroduce = alice.introduce();
+alice.storePointAsJson("alice", "DHI",  aliceIntroduce.identity);
+alice.storePointAsJson("alice", "DHHS", aliceIntroduce.handshake);
+alice.storePointAsJson("alice", "DHR",  aliceIntroduce.ratchet);
+
+
+var aliceIntroduce2 = 
+{
+    identity: {
+      PK: alice.createPointFromJson("alice", "DHI")
+    },
+
+    handshake: {
+      PK: alice.createPointFromJson("alice", "DHHS")
+    },
+
+    ratchet: {
+      PK: alice.createPointFromJson("alice", "DHR"), 
+    }
+};
+
+var bobIntroduce2 = 
+{
+    identity: {
+      PK: bob.createPointFromJson("bob", "DHI")
+    },
+
+    handshake: {
+      PK: bob.createPointFromJson("bob", "DHHS")
+    },
+
+    ratchet: {
+      PK: bob.createPointFromJson("bob", "DHR"), 
+    }
+};
+
+alice .init(bobIntroduce  ,    /* Do not verify */ false);
+bob   .init(aliceIntroduce,  /* Do not verify */ false);
+
+var eyo = alice.encrypt("Quick brown fox jumps over the lazy dog! 😸");
+//var eyo = alice.encryptBytes([ 0, 1, 2, 3, 3, 2, 1 ]);
+
+console.log(eyo);
+
+var dyo = bob.decrypt(eyo);
+//var dyo = bob.decryptBytes(eyo);
+
+console.log(dyo);
+
+var eyo2 = bob.encrypt("Hello world ! ");
+var dyo2 = alice.decrypt(eyo2);
+
+console.log(dyo2);
